@@ -102,15 +102,24 @@ of six habits is a few thousand rows.
    sets up the service itself.
 3. When prompted, fill in the two variables it asks for:
    - `DATABASE_URL` — the Neon string from step 1, pasted unchanged
-   - `CORS_ORIGINS` — leave it as `http://localhost:5173` for now; you will come
+   - `CORS_ORIGINS` — leave it as `http://localhost:5173` for now; you will come 
      back and add the Vercel URL in step 4
 4. Deploy. When it finishes, visit `https://<your-service>.onrender.com/api/health`
    — it should return `{"status":"ok",...}`. Tables are created on first boot.
+
+If you created the service by hand instead of from the blueprint, the defaults
+already work: Render builds the [`Dockerfile`](Dockerfile) at the repo root, and
+that Dockerfile reaches into `backend/` itself. Leave **Root Directory** empty.
 
 > **The free-tier catch:** Render sleeps a free service after 15 minutes of no
 > traffic, so the next request takes 30–60 seconds to wake it. The app handles
 > this — requests retry and the UI shows a loading state — but it is worth knowing
 > before you demo it to someone. Opening the site a minute early is enough.
+
+> **`failed to read dockerfile: open Dockerfile: no such file or directory`**
+> means the service is pointed somewhere without a Dockerfile. The Dockerfile is
+> at the repo root, so clear **Root Directory** in the service settings (or set
+> **Dockerfile Path** to `./Dockerfile`) and redeploy.
 
 ### Step 3 — Web app on Vercel
 
@@ -237,8 +246,10 @@ The stack is containerised if you would rather not use Render:
 docker compose up          # API on :8000, Postgres on :5432
 ```
 
-The same `backend/Dockerfile` deploys to Fly.io, Railway, Koyeb, or any box that
-runs Docker.
+There is one [`Dockerfile`](Dockerfile), at the repo root, and it is what Render,
+compose, Fly.io, Railway, Koyeb and any box running Docker all build — so what
+you test locally is what deploys. It builds the API only; the frontend is static
+files served by Vercel.
 
 ## Configuration
 

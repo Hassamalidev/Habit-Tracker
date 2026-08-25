@@ -18,7 +18,9 @@ services:
       retries: 10
 
   api:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: Dockerfile
     environment:
       DATABASE_URL: postgresql://habits:habits@db:5432/habits
       JWT_SECRET: local-development-secret

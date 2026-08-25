@@ -1,0 +1,36 @@
+# The build context is the whole repo, so everything the image does not need is
+# excluded here. Without this, node_modules and .venv alone are a few hundred MB
+# uploaded to the daemon on every build.
+
+# Frontend (deploys to Vercel, never into this image)
+frontend/
+
+# Python
+**/__pycache__/
+**/*.py[cod]
+.venv/
+backend/.venv/
+.pytest_cache/
+backend/.pytest_cache/
+
+# Local databases and secrets
+**/*.db
+**/.env
+**/.env.local
+
+# Tests and tooling are not needed at runtime
+backend/tests/
+backend/requirements-dev.txt
+backend/pytest.ini
+
+# Version control and editors
+.git/
+.gitignore
+.vscode/
+.idea/
+.DS_Store
+
+# Docs and compose files
+README.md
+docker-compose.yml
+render.yaml
