@@ -1,0 +1,23 @@
+# Render blueprint. In the Render dashboard: New > Blueprint, point it at this
+# repo, and it creates the API service from this file.
+#
+# DATABASE_URL and CORS_ORIGINS are marked `sync: false`, so Render asks for them
+# during setup instead of storing secrets in the repo.
+services:
+  - type: web
+    name: habit-tracker-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false

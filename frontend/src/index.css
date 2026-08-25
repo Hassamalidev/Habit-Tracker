@@ -1,0 +1,332 @@
+@import "tailwindcss";
+
+/* Dark mode is a deliberate three-state system: an explicit choice wins, and
+   with no choice recorded the OS preference decides. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ---------------------------------------------------------------- light theme */
+:root {
+  --paper: #faf8f5;
+  --surface: #ffffff;
+  --sunk: #f2eee7;
+  --raised: #fdfcfa;
+
+  --ink: #1c1a17;
+  --ink-soft: #5f594f;
+  --ink-faint: #767065;
+
+  --rule: #e5e0d7;
+  --rule-strong: #cfc8ba;
+
+  --accent: #17724a;
+  --accent-ink: #17724a;
+  --accent-soft: #e4efe8;
+  --on-accent: #ffffff;
+
+  --fire: #d2762f;
+  --fire-ink: #a65418;
+  --fire-soft: #f7ece1;
+
+  --danger: #b23b4e;
+  --danger-ink: #96253a;
+
+  /* Habit identity hues. Fixed order, validated for colour-vision separation
+     against this surface; never reordered, never generated. */
+  --h-evergreen: #17724a;
+  --h-clay: #d2762f;
+  --h-indigo: #3f53a8;
+  --h-ochre: #b08419;
+  --h-plum: #9b3f7e;
+  --h-teal: #2295ab;
+  --h-rose: #b23b4e;
+  --h-violet: #6c63c7;
+
+  /* Single-hue magnitude ramp for the calendar heatmap. */
+  --seq-1: #7bbc97;
+  --seq-2: #58a67d;
+  --seq-3: #349164;
+  --seq-4: #037b4e;
+  --seq-5: #04633d;
+  --seq-0: #ece7dd;
+
+  --shadow-card: 0 1px 2px rgb(28 26 23 / 0.04), 0 1px 1px rgb(28 26 23 / 0.03);
+  --shadow-pop: 0 4px 16px rgb(28 26 23 / 0.1), 0 1px 3px rgb(28 26 23 / 0.06);
+  --grain-opacity: 0.035;
+}
+
+/* ----------------------------------------------------------------- dark theme */
+/* Re-stepped from the same hues against the dark surface, not flipped. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #14130f;
+    --surface: #1c1a16;
+    --sunk: #24211b;
+    --raised: #221f1a;
+
+    --ink: #f1ece2;
+    --ink-soft: #ada598;
+    --ink-faint: #8c8477;
+
+    --rule: #2f2b24;
+    --rule-strong: #423c32;
+
+    --accent: #46af7b;
+    --accent-ink: #46af7b;
+    --accent-soft: #1c2e24;
+    --on-accent: #0e1712;
+
+    --fire: #d87930;
+    --fire-ink: #e08d4c;
+    --fire-soft: #2b2118;
+
+    --danger: #ba4254;
+    --danger-ink: #d97080;
+
+    --h-evergreen: #05764a;
+    --h-clay: #d87930;
+    --h-indigo: #4a60bb;
+    --h-ochre: #bb8b08;
+    --h-plum: #a34284;
+    --h-teal: #0fa5bf;
+    --h-rose: #ba4254;
+    --h-violet: #8882e5;
+
+    --seq-1: #175b3c;
+    --seq-2: #137048;
+    --seq-3: #1b8657;
+    --seq-4: #2d9b68;
+    --seq-5: #46af7b;
+    --seq-0: #232019;
+
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-pop: 0 6px 20px rgb(0 0 0 / 0.5);
+    --grain-opacity: 0.02;
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper: #14130f;
+  --surface: #1c1a16;
+  --sunk: #24211b;
+  --raised: #221f1a;
+
+  --ink: #f1ece2;
+  --ink-soft: #ada598;
+  --ink-faint: #8c8477;
+
+  --rule: #2f2b24;
+  --rule-strong: #423c32;
+
+  --accent: #46af7b;
+  --accent-ink: #46af7b;
+  --accent-soft: #1c2e24;
+  --on-accent: #0e1712;
+
+  --fire: #d87930;
+  --fire-ink: #e08d4c;
+  --fire-soft: #2b2118;
+
+  --danger: #ba4254;
+  --danger-ink: #d97080;
+
+  --h-evergreen: #05764a;
+  --h-clay: #d87930;
+  --h-indigo: #4a60bb;
+  --h-ochre: #bb8b08;
+  --h-plum: #a34284;
+  --h-teal: #0fa5bf;
+  --h-rose: #ba4254;
+  --h-violet: #8882e5;
+
+  --seq-1: #175b3c;
+  --seq-2: #137048;
+  --seq-3: #1b8657;
+  --seq-4: #2d9b68;
+  --seq-5: #46af7b;
+  --seq-0: #232019;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-pop: 0 6px 20px rgb(0 0 0 / 0.5);
+  --grain-opacity: 0.02;
+}
+
+/* Tokens resolve at runtime, so one set of utilities serves both themes. */
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-sunk: var(--sunk);
+  --color-raised: var(--raised);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+  --color-fire: var(--fire);
+  --color-fire-ink: var(--fire-ink);
+  --color-fire-soft: var(--fire-soft);
+  --color-danger: var(--danger);
+  --color-danger-ink: var(--danger-ink);
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    sans-serif;
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+
+  --shadow-card: var(--shadow-card);
+  --shadow-pop: var(--shadow-pop);
+}
+
+@layer base {
+  * {
+    border-color: var(--rule);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scrollbar-color: var(--rule-strong) transparent;
+  }
+
+  body {
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv05" 1, "ss01" 1;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* A faint fibre texture. It is what keeps large flat fields from looking
+     like plastic, and it replaces the gradient that usually does that job. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: var(--grain-opacity);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  /* Dates, counts and percentages must not jitter as they change. */
+  .tnum,
+  th,
+  td {
+    font-variant-numeric: tabular-nums;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--ink);
+  }
+}
+
+@layer components {
+  .card {
+    background-color: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    box-shadow: var(--shadow-card);
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  /* One reusable hairline, so rules never drift between components. */
+  .rule-b {
+    border-bottom: 1px solid var(--rule);
+  }
+
+  /* The grid's frozen first column. On a phone it gives back most of its width
+     so more than five days of the month stay on screen. */
+  .grid-name-col {
+    width: 208px;
+    min-width: 208px;
+  }
+
+  @media (max-width: 640px) {
+    .grid-name-col {
+      width: 132px;
+      min-width: 132px;
+    }
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes drawer-in {
+  from {
+    transform: translateX(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* One pulse when a cell completes, so a tick registers as an event. */
+@keyframes cell-pop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.22);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.cell-pop {
+  animation: cell-pop 260ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
