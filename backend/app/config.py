@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_minutes: int = 60 * 24 * 14  # two weeks
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+    # Optional. A regex matched against the Origin header, for hosts that hand out
+    # a new URL per deploy: Vercel previews are `https://.*\.vercel\.app`.
+    cors_origin_regex: str = ""
     app_name: str = "Habit Tracker API"
 
     @property
@@ -34,7 +37,20 @@ class Settings(BaseSettings):
 
     @property
     def cors_origin_list(self) -> list[str]:
-        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+        """Allowed origins, normalised to the exact form a browser sends.
+
+        An `Origin` header is only ever scheme + host + port — never a trailing
+        slash, never quoted. Pasting a URL straight from the address bar gives
+        you `https://example.com/`, which then silently matches nothing, so the
+        usual copy-paste damage is stripped here rather than left to fail at
+        request time.
+        """
+        cleaned: list[str] = []
+        for raw in self.cors_origins.split(","):
+            origin = raw.strip().strip("\"'").rstrip("/").strip()
+            if origin:
+                cleaned.append(origin)
+        return cleaned
 
 
 @lru_cache

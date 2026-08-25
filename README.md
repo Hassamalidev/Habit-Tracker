@@ -63,7 +63,7 @@ the other without a refresh.
 ### Tests
 
 ```bash
-cd backend && pytest              # 76 tests: schedule maths, auth, entries, analytics, groups
+cd backend && pytest              # 85 tests: schedule maths, auth, entries, analytics, groups, CORS
 cd frontend && npm run typecheck
 ```
 
@@ -142,12 +142,45 @@ Save. Render redeploys, and the app is live. (Add `http://localhost:5173` as a
 second comma-separated value if you also want to keep developing against the
 deployed API.)
 
+The value has to match what the browser sends as `Origin` — scheme, host and
+port, and **nothing else**. `https://your-app.vercel.app/` with a trailing slash
+matches nothing. Vercel also gives every preview build its own URL, so to keep
+those working set `CORS_ORIGIN_REGEX` to `https://.*\.vercel\.app` instead of
+listing them.
+
+> **Stuck on `CORS error` / `Failed to fetch` in the browser?** Ask the API what
+> it is running with:
+>
+> ```bash
+> curl https://<your-service>.onrender.com/api/health
+> ```
+>
+> It returns the origins it will actually accept. If yours is not in that list,
+> that is the whole problem — fix `CORS_ORIGINS` and redeploy. The origins are
+> also printed once in the Render deploy log at startup.
+
 ### Optional — a demo account on the live site
 
+The seed script writes wherever `DATABASE_URL` points, so point it at Neon for
+one run. Set the variable the way your shell expects:
+
+```powershell
+# Windows PowerShell
+cd backend
+$env:DATABASE_URL = "<your Neon string>"
+python seed_demo.py
+Remove-Item Env:DATABASE_URL   # back to the local SQLite file
+```
+
 ```bash
+# macOS / Linux / Git Bash
 cd backend
 DATABASE_URL="<your Neon string>" python seed_demo.py
 ```
+
+Quote the string: Neon's URL contains `&`, which both shells treat as a control
+character when it is bare. Clearing the variable afterwards matters — otherwise
+the next `uvicorn` you run locally is talking to production.
 
 ---
 
@@ -166,7 +199,7 @@ backend/
       schedule.py     what a habit is owed and how long the run is
       analytics.py    rates, streaks, heatmap, weekday split, insights
   seed_demo.py        120 days of realistic sample data
-  tests/              76 tests
+  tests/              85 tests
 frontend/
   src/
     components/       the grid, day panel, command palette, charts, UI pieces
@@ -258,4 +291,5 @@ files served by Vercel.
 | `DATABASE_URL` | backend   | Neon/Postgres string. Defaults to local SQLite.             |
 | `JWT_SECRET`   | backend   | Signs tokens. Render generates one; never reuse the default.|
 | `CORS_ORIGINS` | backend   | Comma-separated origins allowed to call the API.            |
+| `CORS_ORIGIN_REGEX` | backend | Optional regex for per-deploy URLs, e.g. Vercel previews. |
 | `VITE_API_URL` | frontend  | API base URL. Leave unset locally to use the Vite proxy.    |

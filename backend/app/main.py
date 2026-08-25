@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import uuid
 from contextlib import asynccontextmanager
 
@@ -15,12 +16,25 @@ from .security import decode_access_token
 settings = get_settings()
 
 
+logger = logging.getLogger("habit-tracker")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # The schema is small and additive, so it is created on boot rather than
     # through a migration tool. Swap in Alembic once columns start changing shape.
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    # A browser only ever reports "CORS error" with no detail, so the origins
+    # this process will actually accept are printed once, into the deploy log.
+    logger.warning(
+        "CORS allows: %s%s",
+        ", ".join(settings.cors_origin_list) or "(nothing configured)",
+        f" | regex: {settings.cors_origin_regex}"
+        if settings.cors_origin_regex
+        else "",
+    )
     yield
     await engine.dispose()
 
@@ -36,6 +50,9 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
+    # Hosts that mint a URL per deploy (Vercel previews) need a pattern rather
+    # than a list; unset by default, so it costs nothing when unused.
+    allow_origin_regex=settings.cors_origin_regex or None,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -50,7 +67,20 @@ app.include_router(groups.router)
 
 @app.get("/api/health", tags=["meta"])
 async def health():
-    return {"status": "ok", "service": settings.app_name}
+    """Liveness, plus the CORS config this process is actually running with.
+
+    Allowed origins are not secret - any browser can discover them by asking -
+    and having them one request away turns a blank "CORS error" into something
+    you can diagnose without shell access to the host.
+    """
+    return {
+        "status": "ok",
+        "service": settings.app_name,
+        "cors": {
+            "allowed_origins": settings.cors_origin_list,
+            "allowed_origin_regex": settings.cors_origin_regex or None,
+        },
+    }
 
 
 @app.get("/", include_in_schema=False)
