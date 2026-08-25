@@ -10,10 +10,13 @@ something honest to show rather than a wall of green.
 
 import asyncio
 import random
+import sys
 from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy import delete, func, select
+from sqlalchemy.exc import OperationalError
 
+from app.config import get_settings
 from app.db import Base, SessionLocal, engine
 from app.models import Entry, Group, GroupMember, Habit, Message, User
 from app.security import hash_password
@@ -244,5 +247,47 @@ async def main() -> None:
     print(f"\ndone - log in as {DEMO_EMAIL} / {DEMO_PASSWORD}")
 
 
+def run(coro) -> None:
+    """Run the seed on an event loop psycopg can actually use.
+
+    Windows defaults to ProactorEventLoop, which psycopg's async driver refuses,
+    so seeding a Postgres database from Windows fails outright. SQLite does not
+    care, which is why this only ever shows up when pointing the script at Neon.
+    Elsewhere the default loop is already fine.
+    """
+    if sys.platform != "win32":
+        asyncio.run(coro)
+        return
+
+    if sys.version_info >= (3, 12):
+        asyncio.run(coro, loop_factory=asyncio.SelectorEventLoop)
+        return
+
+    # 3.11 has no loop_factory, so the policy is the only lever.
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    asyncio.run(coro)
+
+
+def check_url() -> None:
+    """Catch a connection string that was never filled in.
+
+    Copying a documented command keeps the `<password>` placeholder, and the
+    database then rejects it as a wrong password buried in a long traceback.
+    """
+    url = get_settings().database_url
+    if "<" in url or ">" in url:
+        sys.exit(
+            "DATABASE_URL still contains a placeholder like <password>.\n"
+            "Paste the real connection string from your database dashboard."
+        )
+
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    check_url()
+    try:
+        run(main())
+    except OperationalError as exc:
+        # One readable line beats a wall of driver traceback for what is almost
+        # always a wrong password or an unreachable host.
+        detail = str(exc.orig).strip().splitlines()[0] if exc.orig else str(exc)
+        sys.exit(f"\nCould not connect to the database.\n  {detail}\n")

@@ -63,7 +63,7 @@ the other without a refresh.
 ### Tests
 
 ```bash
-cd backend && pytest              # 85 tests: schedule maths, auth, entries, analytics, groups, CORS
+cd backend && pytest              # 86 tests: schedule maths, auth, entries, analytics, groups, config
 cd frontend && npm run typecheck
 ```
 
@@ -182,6 +182,16 @@ Quote the string: Neon's URL contains `&`, which both shells treat as a control
 character when it is bare. Clearing the variable afterwards matters — otherwise
 the next `uvicorn` you run locally is talking to production.
 
+> **Windows note.** Python on Windows defaults to `ProactorEventLoop`, and
+> psycopg's async driver refuses to run on it, so anything talking to Postgres
+> from a Windows host fails with
+> `Psycopg cannot use the 'ProactorEventLoop'`. `seed_demo.py` handles this
+> itself. `uvicorn` does not — it builds its own loop — so **running the API
+> locally on Windows against Postgres does not work**. Local development uses
+> SQLite by default, which is unaffected, and deploys run on Linux where the
+> default loop is already compatible. If you do need the API against Postgres on
+> Windows, run it in Docker: `docker compose up`.
+
 ---
 
 ## How it is built
@@ -199,7 +209,7 @@ backend/
       schedule.py     what a habit is owed and how long the run is
       analytics.py    rates, streaks, heatmap, weekday split, insights
   seed_demo.py        120 days of realistic sample data
-  tests/              85 tests
+  tests/              86 tests
 frontend/
   src/
     components/       the grid, day panel, command palette, charts, UI pieces

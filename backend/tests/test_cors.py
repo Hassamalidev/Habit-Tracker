@@ -59,3 +59,29 @@ async def test_health_reports_the_running_cors_config(client):
     assert body["status"] == "ok"
     assert "allowed_origins" in body["cors"]
     assert isinstance(body["cors"]["allowed_origins"], list)
+
+
+# --------------------------------------------------------------- seed runner
+
+
+def test_the_seed_runner_avoids_the_loop_psycopg_rejects():
+    """Windows defaults to ProactorEventLoop, which psycopg refuses outright.
+
+    Seeding a Postgres database from Windows died on this, and SQLite hid it
+    because its driver does not care which loop it is on.
+    """
+    import asyncio
+    import sys
+
+    from seed_demo import run
+
+    seen: list[str] = []
+
+    async def probe() -> None:
+        seen.append(type(asyncio.get_running_loop()).__name__)
+
+    run(probe())
+
+    assert seen, "the runner never executed the coroutine"
+    if sys.platform == "win32":
+        assert "Proactor" not in seen[0], f"psycopg cannot use {seen[0]}"
