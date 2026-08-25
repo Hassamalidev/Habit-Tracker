@@ -85,3 +85,27 @@ def test_the_seed_runner_avoids_the_loop_psycopg_rejects():
     assert seen, "the runner never executed the coroutine"
     if sys.platform == "win32":
         assert "Proactor" not in seen[0], f"psycopg cannot use {seen[0]}"
+
+
+# ------------------------------------------------------------ startup checks
+
+
+async def test_prepare_database_creates_the_schema():
+    """The startup path itself, on the test database."""
+    from app.main import prepare_database
+
+    await prepare_database()  # idempotent; conftest has already created tables
+
+
+def test_credential_failures_are_not_treated_as_transient():
+    """Retrying a wrong password only delays the real message.
+
+    The service stays down either way, so the log has to say which it is.
+    """
+    from app.main import _FATAL_DB_ERRORS
+
+    fatal = 'connection failed: FATAL:  password authentication failed for user "x"'
+    transient = "connection timeout expired"
+
+    assert any(m in fatal.lower() for m in _FATAL_DB_ERRORS)
+    assert not any(m in transient.lower() for m in _FATAL_DB_ERRORS)

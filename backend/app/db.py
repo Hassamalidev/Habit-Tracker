@@ -7,6 +7,11 @@ from .config import get_settings
 
 settings = get_settings()
 
+# Without a bound, an unreachable database hangs the TCP connect for minutes and
+# a deploy looks stuck rather than broken. SQLite is a local file and takes no
+# such argument.
+connect_args = {"connect_timeout": 10} if settings.is_postgres else {}
+
 engine = create_async_engine(
     settings.async_database_url,
     echo=False,
@@ -14,6 +19,7 @@ engine = create_async_engine(
     # before checkout turns a stale-socket crash into a transparent reconnect.
     pool_pre_ping=True,
     pool_recycle=280,
+    connect_args=connect_args,
 )
 
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)

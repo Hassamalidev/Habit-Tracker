@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.exc import OperationalError
 
 from .config import get_settings
 from .db import Base, SessionLocal, engine
@@ -19,12 +20,65 @@ settings = get_settings()
 logger = logging.getLogger("habit-tracker")
 
 
+# Credentials will never come right by waiting; anything else might.
+_FATAL_DB_ERRORS = (
+    "password authentication failed",
+    "does not exist",
+    "no pg_hba.conf entry",
+    "role ",
+)
+
+
+async def prepare_database(attempts: int = 5) -> None:
+    """Create the schema, retrying while the database is merely waking up.
+
+    Neon suspends a free database after inactivity, so the first connection of
+    the day can fail before the endpoint is ready. A wrong password, though, is
+    never transient - retrying that just delays the real message by half a
+    minute and leaves the service down either way.
+    """
+    delay = 1.0
+    for attempt in range(1, attempts + 1):
+        try:
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+            return
+        except OperationalError as exc:
+            detail = str(exc.orig or exc).strip().splitlines()[0]
+            fatal = any(marker in detail.lower() for marker in _FATAL_DB_ERRORS)
+
+            if fatal:
+                logger.error(
+                    "Database refused the connection: %s\n"
+                    "This is a credentials problem, not a temporary one - check "
+                    "DATABASE_URL matches the connection string in your database "
+                    "dashboard, password included.",
+                    detail,
+                )
+                raise
+
+            if attempt == attempts:
+                logger.error(
+                    "Database unreachable after %d attempts: %s", attempts, detail
+                )
+                raise
+
+            logger.warning(
+                "Database not ready (attempt %d/%d), retrying in %.0fs: %s",
+                attempt,
+                attempts,
+                delay,
+                detail,
+            )
+            await asyncio.sleep(delay)
+            delay = min(delay * 2, 8.0)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # The schema is small and additive, so it is created on boot rather than
     # through a migration tool. Swap in Alembic once columns start changing shape.
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    await prepare_database()
 
     # A browser only ever reports "CORS error" with no detail, so the origins
     # this process will actually accept are printed once, into the deploy log.

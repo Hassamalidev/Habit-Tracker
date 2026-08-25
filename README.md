@@ -63,7 +63,7 @@ the other without a refresh.
 ### Tests
 
 ```bash
-cd backend && pytest              # 86 tests: schedule maths, auth, entries, analytics, groups, config
+cd backend && pytest              # 88 tests: schedule maths, auth, entries, analytics, groups, config, startup
 cd frontend && npm run typecheck
 ```
 
@@ -209,7 +209,7 @@ backend/
       schedule.py     what a habit is owed and how long the run is
       analytics.py    rates, streaks, heatmap, weekday split, insights
   seed_demo.py        120 days of realistic sample data
-  tests/              86 tests
+  tests/              88 tests
 frontend/
   src/
     components/       the grid, day panel, command palette, charts, UI pieces
